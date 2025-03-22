@@ -51,6 +51,10 @@ By the end of this lab, you will:
 ```
 pip install -U "autogen-agentchat" "autogen-ext[openai,azure]"
 ```
+and add your AOAI enpoint to the .env file 
+```
+AZURE_OPENAI_ENDPOINT=https://xxxxx.openai.azure.com/
+```
 
 ### Step 2: Create Azure AI Foundry Agents
 
