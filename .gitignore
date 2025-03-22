@@ -18,3 +18,7 @@ appsettings.*.json
 .azure/
 .files/
 src/workshop/[.][v]env/
+src/workshop/.env copy.sample
+infra/output.json
+src/workshop/agentTeam/test.ipynb
+src/workshop/agent_final.py
