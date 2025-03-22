@@ -22,3 +22,5 @@ src/workshop/.env copy.sample
 infra/output.json
 src/workshop/agentTeam/test.ipynb
 src/workshop/agent_final.py
+src/workshop/main.py
+src/workshop/autoGenResearchTeam.py

@@ -1,18 +1,28 @@
 ## Introduction
 
 Building Multi-Agent Solutions with **Azure AI Agent Service**
-In this lab, you will explore how to build and orchestrate multi-agent solutions using Azure AI Agent Service. The lab demonstrates how to create, configure, and manage multiple AI agents with specialized capabilities, enabling them to collaborate on complex tasks. This hands-on workshop will guide you through the process of leveraging Azure AI tools and services to build intelligent, task-oriented agents.
+
+![Alt Text](./media/lab6Visual.jpg)
+
+
+In this lab, you will learn how to build and orchestrate multi-agent solutions using **AutoGen** and the **Azure AI Agent Service**. The lab demonstrates the creation, configuration, and management of multiple AI agents with specialized capabilities, enabling them to collaborate on complex tasks. This hands-on workshop will guide you through leveraging Azure AI tools and services to develop intelligent, task-oriented agents.
 
 ### Key LAB Features:
 #### Agent Creation:
 
-The LAB defines two specialized agents:
-- Web Search Agent: Uses Bing's grounding tool to perform web searches and retrieve relevant information.
-- Code Interpreter Agent: Executes code-related tasks, such as saving content to files.
+The lab defines three main specialized agents using **AutoGen**:
+
+- **Web Search Agent**: Utilizes Bing's grounding tool to perform web searches and retrieve relevant information.
+- **Code Interpreter Agent**: Handles code-related tasks, such as executing scripts and saving content to files.
+- **Write Agent**: Generates written content, such as blog posts.
+
 
 #### Tool Integration:
 
-The agents are equipped with tools like BingGroundingTool for web searches and CodeInterpreterTool for code execution, enabling them to perform specific tasks effectively.
+The Azure AI Agents are equipped with tools such as the **BingGroundingTool** for web searches and the **CodeInterpreterTool** for code execution, enabling them to perform specific tasks efficiently.
+
+The **AutoAgent** agents utilize Python function tools to interact with the **Azure AI Agents**.
+
 
 #### Agent Team Collaboration:
 
@@ -37,29 +47,31 @@ The LAB defines termination conditions to ensure the agents stop processing afte
 The LAB uses **Azure AI services**, such as **AIProjectClient** and **AzureOpenAIChatCompletionClient**, to manage agents and leverage powerful AI models like GPT-4.
 
 #### Learning Objectives:
+
 By the end of this lab, you will:
 
-- Understand how to create and configure AI agents with Azure AI tools.
-- Learn how to integrate tools like Bing and code interpreters into agents.
-- Explore how to orchestrate multi-agent collaboration for complex workflows.
-- Gain hands-on experience with Azure AI Agent Service and its APIs.
-- This lab provides a practical foundation for building intelligent, multi-agent systems that can automate tasks and solve real-world problems efficiently.
+- Understand how to create and configure AI agents using Azure AI tools.
+- Learn how to integrate tools such as Bing and code interpreters into agents.
+- Explore methods to orchestrate multi-agent collaboration for complex workflows.
+- Learn how to build **AutoAgent** agents and use tool calling to integrate with **Azure AI Agent Service** agents.
 
 ## Lab Exercise
 
 ### Step 1 : add Autogen references
+To use **AutoGen** you must add the right phyton libraries. 
 ```
 pip install -U "autogen-agentchat" "autogen-ext[openai,azure]"
 ```
-and add your AOAI enpoint to the .env file 
+and add your AOAI enpoint to the .env file
 ```
 AZURE_OPENAI_ENDPOINT=https://xxxxx.openai.azure.com/
 ```
 
 ### Step 2: Create Azure AI Foundry Agents
 
-1.  Create the first agent **create_AIF_webSearch_Agent** adding the following code to the class **autoGenResearchTeam**
-This is an Azure AI agent that has BingSearch tool to perfomr web searchs.
+1. Create the first agent, **create_AIF_webSearch_Agent**, by adding the following code to the class **autoGenResearchTeam**.  
+   This is an Azure AI agent equipped with the BingSearch tool to perform web searches.
+
 ```python
     async def create_AIF_webSearch_Agent() -> Agent:
         """Create a web search agent."""
@@ -80,7 +92,8 @@ This is an Azure AI agent that has BingSearch tool to perfomr web searchs.
         )
         return agent
 ```
-2. Create the second agent **create_AIF_code_interpreter_agent** adding the following code to the class **autoGenResearchTeam**. This is an Azure AI agent that using **CodeInterpreterTool** can write and execute phyton code in a sandbox to complete the task.
+2. Create the second agent, **create_AIF_code_interpreter_agent**, by adding the following code to the class **autoGenResearchTeam**.  
+   This is an Azure AI agent that, using the **CodeInterpreterTool**, can write and execute Python code in a sandbox to complete tasks.
 ```Python
     async def create_AIF_code_interpreter_agent() -> Agent:
         """Create a code interpreter agent."""
@@ -99,10 +112,11 @@ This is an Azure AI agent that has BingSearch tool to perfomr web searchs.
         return agent
 ```
 
-3. This lab uses **AutoGen** as a multi-agent framework to coordinate all the agents. AutoGen has its own agent definitions. To use Azure AI agents with AutoGen, you need to create an AutoGen agent that utilizes Azure AI agents as tools. Tools in AutoGen agents could be a phyton function, in this lab we are going to creaet 2 AutoAgent tool.
-    First, a Webserach tool called **web_search_autoGen_tool**. this tool (funciton) create an AIF_webSearch_Agent instance to performe the search.
+3. This lab uses **AutoGen** as a multi-agent framework to coordinate all the agents. AutoGen has its own agent definitions. To integrate Azure AI agents with AutoGen, you need to create an AutoGen agent that utilizes Azure AI agents as tools. Tools in AutoGen agents can include Python functions. In this lab, we are going to create two AutoAgent tools.
 
-    Add the following code to the class to create the tool that going to be use by the Autogen agent.
+   First, a web search tool called **web_search_autoGen_tool**. This tool (function) creates an **AIF_webSearch_Agent** instance to perform searches.
+
+   Add the following code to the class to create the tool that will be used by the AutoGen agent.
 
     ```python
     async def web_search_autoGen_tool(query: str) -> str:
@@ -138,7 +152,7 @@ This is an Azure AI agent that has BingSearch tool to perfomr web searchs.
         return messages["data"][0]["content"][0]["text"]["value"]
     ```
 
-    Second, create the tool to use to save the content file.
+    Second, create the tool **save_blog_autoGen_tool** to use to save the content file.
     ```python
         async def save_blog_autoGen_tool(blog_content: str) -> str:
         AIF_File_Generator_Agent=await autoGenResearchTeam.create_AIF_code_interpreter_agent()
@@ -192,18 +206,17 @@ This is an Azure AI agent that has BingSearch tool to perfomr web searchs.
         
         return last_msg #"Saved" 
     ```
-    At this point you already have 2 Azure AI Agents **AIF_webSearch_Agent** and **AIF_File_Generator_Agent** with his own tools and 2 python functions **web_search_autoGen_tool** and **save_blog_autoGen_tool** to be used as tool by AutoGen agents to be created in the next step.
+    At this point, you already have two Azure AI Agents: **AIF_webSearch_Agent** and **AIF_File_Generator_Agent**, each equipped with their own tools. Additionally, you have two Python functions: **web_search_autoGen_tool** and **save_blog_autoGen_tool**, which will serve as tools for the AutoGen agents to be created in the next step.
 
+4. Now it is time to create the agent team using **AutoGen**. To achieve this, you will create three agents:
 
-4. Now it is time to create the agent team using autogen. to do that, you going to creaet 3 agents:
+- **autoGen_bing_search_agent**: Performs web searches.
+- **autoGen_write_agent**: Writes a blog post using the information provided by **autoGen_bing_search_agent**.
+- **autoGen_save_blog_content_agent**: Saves the blog post created by **autoGen_write_agent**.
 
-- autoGen_bing_search_agent: to perfomr web search
-- autoGen_write_agent: to write a blogpost with the information provided by autoGen_bing_search_agent
-- autoGen_save_blog_content_agent: to save the glog post created by autoGen_write_agent.
+After defining your agents, you will create a **RoundRobinGroupChat**, an agent group chat where the three agents will collaborate to solve the problem in a coordinated manner.
 
-After you have defined your agentes, you going to create **RoundRobinGroupChat** a agent group chat where the 3 agents going to interact to solve the problem in a collaborative way.
-
-Add the following funtion to the class.
+Add the following function to the class.
 
 ```python
     async def create_autoGen_agentTeam():
@@ -258,7 +271,7 @@ Add the following funtion to the class.
         return reflection_team
 ```
 
-5. To finish the  **autoGenResearchTeam** class you have to add the method **run_autoGen_agentTeam** that send the user prompt to the agent group chat (agent team) to solve to the task.
+5. To complete the **autoGenResearchTeam** class, you need to add the method **run_autoGen_agentTeam**, which sends the user prompt to the agent group chat (agent team) to solve the task.
 ```python
     async def run_autoGen_agentTeam():
         """Run the auto-generated agent team."""
@@ -273,7 +286,7 @@ Add the following funtion to the class.
         """
         await Console(reflection_team.run_stream(task=prompt_philosophy))
 ```
-6. Finally to execute this multy agent LAB you have to modify the orginal file **main.py** and add this reference and function.
+6. Finally, to execute this multi-agent lab, you need to modify the original file **main.py** by adding the required reference and function.
 ```python
 #ADD
 from autoGenResearchTeam import autoGenResearchTeam
@@ -290,9 +303,9 @@ if __name__ == "__main__":
     print("Program finished.")
 ```
 
-7. After you run the program you should see a flow like this one.
+7. After running the program, you should observe a flow similar to the following:
 
--user prompt asking for a research.
+- User prompt initiating a research request.
 ```
 Starting async program...
 await myAgentFactory.autoGen_Blog()
@@ -478,7 +491,7 @@ Last Message: The file has been saved successfully. You can download it using th
 [Download blog-250322004208.md](sandbox:/mnt/data/blog-250322004208.md)
 Deleted agent
 ```
-- autoGen_save_blog_content_agent recives the tool call execution confirmation, and all the agents confirm and the collaboration is finished.
+- **autoGen_save_blog_content_agent** receives the tool call execution confirmation, and all the agents confirm, marking the completion of the collaboration.
 ```
 ---------- autoGen_save_blog_content_agent ----------
 [FunctionExecutionResult(content="{'type': 'text', 'text': {'value': 'The file has been saved successfully. You can download it using the following link:\\n\\n[Download blog-250322004208.md](sandbox:/mnt/data/blog-250322004208.md)', 'annotations': [{'type': 'file_path', 'text': 'sandbox:/mnt/data/blog-250322004208.md', 'start_index': 117, 'end_index': 155, 'file_path': {'file_id': 'assistant-5tY3AcoZufb7H7cYJHkiMV'}}]}}", name='save_blog_autoGen_tool', call_id='call_qwDJsgeuGfwLYdj8Emhr7aPV', is_error=False)]
