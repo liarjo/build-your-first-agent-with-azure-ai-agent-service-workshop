@@ -181,7 +181,8 @@ async def agentFunctionCallTool() -> None:
             print("\n")
             prompt = input(f"{tc.GREEN}Enter your query (type 'back' to choose another agent or 'exit' to finish): {tc.RESET}")
             if prompt.lower() == "exit":
-                return
+                await cleanup(agent, thread)
+                return 
             if prompt.lower() == "back":
                 break
             if not prompt:
