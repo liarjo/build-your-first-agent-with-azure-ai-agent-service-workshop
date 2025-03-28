@@ -75,11 +75,13 @@ async def create_agent_config(agentType: int) -> dict:
 
     # Add vector store if required
     if config.get("vector_store"):
+        # Create a vector store and add the file search tool to the toolset
         vector_store = await utilities.create_vector_store(
             project_client,
             files=[TENTS_DATA_SHEET_FILE],
             vector_name_name="Contoso Product Information Vector Store",
         )
+        # Create the file search tool with the vector store ID
         file_search_tool = FileSearchTool(vector_store_ids=[vector_store.id])
         toolset.add(file_search_tool)
 
@@ -107,11 +109,16 @@ async def initializeAgentWithTools(agentType: int) -> tuple[Agent, AgentThread]:
 
     # Replace the placeholder with the database schema string
     await sales_data.connect()
+    
+    # Return a string containing the database schema information and common query fields
     database_schema_string = await sales_data.get_database_info()
+
+    # Upate the instructions with the actual database schema string
     instructions = instructions.replace("{database_schema_string}", database_schema_string)
 
     # Create the agent and thread
     try:
+        # Create the agent with the specified instructions and toolset
         print("Creating agent...")
         agent = await project_client.agents.create_agent(
             model=API_DEPLOYMENT_NAME,
@@ -123,6 +130,7 @@ async def initializeAgentWithTools(agentType: int) -> tuple[Agent, AgentThread]:
         )
         print(f"Created agent, ID: {agent.id}")
 
+        ## Create a thread for the agent
         print("Creating thread...")
         thread = await project_client.agents.create_thread()
         print(f"Created thread, ID: {thread.id}")
@@ -136,6 +144,7 @@ async def initializeAgentWithTools(agentType: int) -> tuple[Agent, AgentThread]:
 
 async def agentFunctionCallTool_old() -> None:
 
+    # Create the agent & thread
     agent, thread = await initializeAgentWithTools(4)
 
     while True:
@@ -146,6 +155,7 @@ async def agentFunctionCallTool_old() -> None:
             break
         if not prompt:
             continue
+        ## Post the message to the agent, user prompt is the content of the message
         await post_message(agent=agent, thread_id=thread.id, content=prompt, thread=thread)
 
     await cleanup(agent, thread)
@@ -154,7 +164,7 @@ async def agentFunctionCallTool() -> None:
     while True:
         # Ask the user to select the agent type
         print("\nSelect the type of agent you want to use:")
-        print("1: Basic Agent")
+        print("1: Agent with Function Calling (tools)")
         print("2: Agent with Code Interpreter")
         print("3: Agent with File Search and Vector Store")
         print("4: Agent with Bing Grounding and Vector Store")
