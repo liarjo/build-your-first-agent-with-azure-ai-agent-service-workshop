@@ -1,6 +1,27 @@
+"""
+mainDemoMode.py
+
+This script is the main entry point for demonstrating the functionality of Azure AI Agent Service.
+It provides tools and configurations to initialize and interact with various types of AI agents, 
+including agents with function calling, code interpretation, file search with vector stores, 
+and Bing grounding capabilities.
+
+Key functionalities:
+- Dynamically configure agents based on user-selected types.
+- Load and process instructions for agents.
+- Enable Azure Monitor tracing for telemetry and debugging.
+- Handle user queries and interact with agents in real-time.
+- Support cleanup and resource management after agent interactions.
+
+Dependencies:
+- Azure AI Agent Service SDK
+- OpenTelemetry for tracing
+- dotenv for environment variable management
+- Custom modules for tools, utilities, and project-specific logic
+"""
 import logging
 import os
-
+from opentelemetry import trace
 
 from azure.ai.projects.models import (
     Agent,
@@ -16,6 +37,7 @@ from terminal_colors import TerminalColors as tc
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
+
 
 load_dotenv()
 
@@ -161,44 +183,60 @@ async def agentFunctionCallTool_old() -> None:
     await cleanup(agent, thread)
 
 async def agentFunctionCallTool() -> None:
-    while True:
-        # Ask the user to select the agent type
-        print("\nSelect the type of agent you want to use:")
-        print("1: Agent with Function Calling (tools)")
-        print("2: Agent with Code Interpreter")
-        print("3: Agent with File Search and Vector Store")
-        print("4: Agent with Bing Grounding and Vector Store")
-        print("Type 'exit' to quit.")
-        
-        agent_type_input = input(f"{tc.GREEN}Enter your choice (1-4): {tc.RESET}")
-        if agent_type_input.lower() == "exit":
-            break
-        
-        try:
-            agent_type = int(agent_type_input)
-            if agent_type not in [1, 2, 3, 4]:
-                print(f"{tc.RED}Invalid choice. Please select a valid option (1-4).{tc.RESET}")
-                continue
-        except ValueError:
-            print(f"{tc.RED}Invalid input. Please enter a number between 1 and 4.{tc.RESET}")
-            continue
+    # Enable Azure Monitor tracing
+    from opentelemetry import trace
+    from azure.monitor.opentelemetry import configure_azure_monitor
+    application_insights_connection_string = await project_client.telemetry.get_connection_string()
+    if not application_insights_connection_string:
+        print("Application Insights was not enabled for this project.")
+        print("Enable it via the 'Tracing' tab in your AI Foundry project page.")
+        exit()
+    configure_azure_monitor(connection_string=application_insights_connection_string)
+    # enable additional instrumentations
+    project_client.telemetry.enable()
 
-        # Initialize the agent with the selected type
-        agent, thread = await initializeAgentWithTools(agent_type)
+    scenario = os.path.basename(__file__)
+    tracer = trace.get_tracer(__name__)
 
-        # Existing loop to handle user queries
+    with tracer.start_as_current_span(scenario):
         while True:
-            print("\n")
-            prompt = input(f"{tc.GREEN}Enter your query (type 'back' to choose another agent or 'exit' to finish): {tc.RESET}")
-            if prompt.lower() == "exit":
-                await cleanup(agent, thread)
-                return 
-            if prompt.lower() == "back":
+            # Ask the user to select the agent type
+            print("\nSelect the type of agent you want to use:")
+            print("1: Agent with Function Calling (tools)")
+            print("2: Agent with Code Interpreter")
+            print("3: Agent with File Search and Vector Store")
+            print("4: Agent with Bing Grounding and Vector Store")
+            print("Type 'exit' to quit.")
+            
+            agent_type_input = input(f"{tc.GREEN}Enter your choice (1-4): {tc.RESET}")
+            if agent_type_input.lower() == "exit":
                 break
-            if not prompt:
+            
+            try:
+                agent_type = int(agent_type_input)
+                if agent_type not in [1, 2, 3, 4]:
+                    print(f"{tc.RED}Invalid choice. Please select a valid option (1-4).{tc.RESET}")
+                    continue
+            except ValueError:
+                print(f"{tc.RED}Invalid input. Please enter a number between 1 and 4.{tc.RESET}")
                 continue
-            await post_message(agent=agent, thread_id=thread.id, content=prompt, thread=thread)
 
-        # Cleanup after exiting the inner loop
-        await cleanup(agent, thread)
-   
+            # Initialize the agent with the selected type
+            agent, thread = await initializeAgentWithTools(agent_type)
+
+            # Existing loop to handle user queries
+            while True:
+                print("\n")
+                prompt = input(f"{tc.GREEN}Enter your query (type 'back' to choose another agent or 'exit' to finish): {tc.RESET}")
+                if prompt.lower() == "exit":
+                    await cleanup(agent, thread)
+                    return 
+                if prompt.lower() == "back":
+                    break
+                if not prompt:
+                    continue
+                await post_message(agent=agent, thread_id=thread.id, content=prompt, thread=thread)
+
+            # Cleanup after exiting the inner loop
+            await cleanup(agent, thread)
+    
